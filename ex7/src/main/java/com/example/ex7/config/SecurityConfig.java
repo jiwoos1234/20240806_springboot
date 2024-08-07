@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,7 +25,10 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +48,10 @@ public class SecurityConfig {
   @Bean
   protected SecurityFilterChain config(HttpSecurity httpSecurity)
       throws Exception {
+    // csrf 사용안하는 설정
+    httpSecurity.csrf(httpSecurityCsrfConfigurer -> {
+     httpSecurityCsrfConfigurer.disable();
+    });
 
     // authorizeHttpRequests :: 선별적으로 접속을 제한하는 메서드
     // 모든 페이지가 인증을 받도록 되어 있는 상태
@@ -62,15 +70,36 @@ public class SecurityConfig {
       @Override
       public void customize(FormLoginConfigurer<HttpSecurity> httpSecurityFormLoginConfigurer) {
         httpSecurityFormLoginConfigurer
-            .loginPage("/sample/login")
-            .loginProcessingUrl("/sample/login")
+//            .loginPage("/sample/login")
+//            .loginProcessingUrl("/sample/login")
+//            .defaultSuccessUrl("/")
             .successHandler(new AuthenticationSuccessHandler() {
               @Override
               public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-
+                UserDetails principal = (UserDetails) authentication.getPrincipal();
+                Collection<GrantedAuthority> collectors = new ArrayList<>();
+//                collectors.add(() -> "Role_"+principal.)
+                Collection<GrantedAuthority> authors =
+                    (Collection<GrantedAuthority>) principal.getAuthorities();
+                List<String> result = authors.stream().map(new Function<GrantedAuthority, String>() {
+                  @Override
+                  public String apply(GrantedAuthority grantedAuthority) {
+                    return grantedAuthority.getAuthority();
+                  }
+                }).collect(Collectors.toList());
+                System.out.println(">>" + result.toString());
+                for (int i = 0; i < result.size(); i++) {
+                  if (result.get(i).equals("ROLE_ADMIN")) {
+                    response.sendRedirect(request.getContextPath() + "/sample/admin");
+                  } else if (result.get(i).equals("ROLE_MEMBER")) {
+                    response.sendRedirect(request.getContextPath() + "/sample/member");
+                  } else {
+                    response.sendRedirect(request.getContextPath() + "/sample/all");
+                  }
+                  break;
+                }
               }
-            })
-            .defaultSuccessUrl("/");
+            });
       }
     });
 
