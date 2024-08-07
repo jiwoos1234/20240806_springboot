@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{/layout/basic :: setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <h1 class="mt-4">Guestbook Read Page</h1>
+    <style>
+      .form-group {margin-bottom: 30px;}
+    </style>
+    <form th:action="@{/guestbook/modify}" th:method="post" id="frmSend">
+      <div class="form-group">
+        <label for="gno">Gno</label>
+        <input type="text" name="gno" id="gno" class="form-control"
+               th:value="${guestbookDTO.gno}" readonly>
+      </div>
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" class="form-control"
+               th:value="${guestbookDTO.title}" readonly>
+      </div>
+      <div class="form-group">
+        <label for="content">Content</label>
+        <textarea type="text" name="content" id="content" class="form-control"
+                  th:text="${guestbookDTO.content}" readonly></textarea>
+      </div>
+      <div class="form-group">
+        <label for="writer">Writer</label>
+        <input type="text" name="writer" id="writer" class="form-control"
+               th:value="${guestbookDTO.writer}" readonly>
+      </div>
+      <div class="form-group">
+        <label for="regDate">RegDate</label>
+        <input type="text" name="regDate" id="regDate" class="form-control" readonly
+               th:value="${#temporals.format(guestbookDTO.regDate, 'yyyy/MM/dd hh:mm')}">
+      </div>
+      <div class="form-group">
+        <label for="modDate">ModDate</label>
+        <input type="text" name="modDate" id="modDate" class="form-control" readonly
+               th:value="${#temporals.format(guestbookDTO.modDate, 'yyyy/MM/dd hh:mm')}">
+      </div>
+      <div class="form-group">
+        <a th:href="@{/guestbook/modify(gno=${guestbookDTO.gno},
+                      page=${pageRequestDTO.page},type=${pageRequestDTO.type},
+                      keyword=${pageRequestDTO.keyword})}"
+           class="btn btn-primary">Modify</a>
+        <a th:href="@{/guestbook/list(page=${pageRequestDTO.page},
+                      type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}"
+           class="btn btn-info">List</a>
+      </div>
+    </form>
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+      // document의 태그를 모두 읽고 난뒤 실행되는 함수
+      window.onload = function(){
+        var msg = [[${msg}]]
+        // 일회성 msg의 내용이 비거나 history 상태가 비지 않는 경우 return
+        if(msg === '' || history.state) return
+        if(msg) {  // truthy 데이터가 올 경우만 if문 실행
+          const myModal = new bootstrap.Modal(document.querySelector('#myModal'),
+                          { backdrop: true });
+          document.querySelector(".modal-body").innerHTML
+            = `<p>${msg}되었습니다.</p>`
+          myModal.show()
+        }
+        // history 이용해서 모달창 보여준거에 대한 기록을 clear!
+        history.replaceState({}, null, null) //(state, unused, url)
+      }
+    </script>
+  </th:block>
+
+</th:block>
+
+</html>

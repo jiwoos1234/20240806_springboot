@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+    table, td, th {
+      border : 1px solid black;
+      border-collapse : collapse;
+    };
+  </style>
+</head>
+<body>
+<h1>ex1</h1>
+<h4>Thymeleaf의 표현식</h4>
+<table style="width: 44.3023%; height: 74px;">
+  <tbody>
+  <tr style="height: 20px;">
+    <td style="width: 41.8795%; height: 20px;"><b>변수</b></td>
+    <td style="width: 58.1205%; height: 20px;"><b>${...}</b></td>
+  </tr>
+  <tr style="height: 20px;">
+    <td style="width: 41.8795%; height: 20px;"><b>선택 변수</b></td>
+    <td style="width: 58.1205%; height: 20px;"><b>*{...}</b></td>
+  </tr>
+  <tr style="height: 17px;">
+    <td style="width: 41.8795%; height: 17px;"><b>메세지</b></td>
+    <td style="width: 58.1205%; height: 17px;"><b>#{...}</b></td>
+  </tr>
+  <tr style="height: 17px;">
+    <td style="width: 41.8795%; height: 17px;"><b>Link URL</b></td>
+    <td style="width: 58.1205%; height: 17px;"><b>@{...}</b></td>
+  </tr>
+  </tbody>
+</table>
+<p>
+  <a th:href="@{/sample/expression}">표현식(expression) 예제 보기</a>
+</p>
+</body>
+</html>

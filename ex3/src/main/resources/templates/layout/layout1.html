@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="setContent(content)">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+
+  <style>
+    /* vw: 넓이를 100%기준으로 표시, vh: 높이를 100% 기준으로 표시 */
+    *{margin:0;padding:0;}
+    .header{background-color:aqua; width:100vw; height:20vh;}
+    .content{background-color:lightgray; width:100vw; height:70vh;}
+    .footer{background-color:green; width:100vw; height:10vh;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>HEADER</h1>
+</div>
+
+<div class="content">
+  <th:block th:replace="${content}"></th:block>
+</div>
+
+<div class="footer">
+  <h1>FOOTER</h1>
+</div>
+
+</body>
+</th:block>
+</html>

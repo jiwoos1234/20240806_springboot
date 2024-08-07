@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<h1>templates index</h1>
+<!--절대경로: context-path는 향후에 변경가능성 농후 -->
+<a href="/ex3/sample/ex1">/ex3/sample/ex1</a><br>
+
+<!--상대경로: 나의 위치로부터 경로 설정 변경가능성 존재 -->
+<a href="./sample/ex1">./sample/ex1</a><br>
+
+<!--Context-relative URL: thymeleaf를 사용 변경에 영향 무 -->
+<a th:href="@{/sample/ex1}">/sample/ex1</a><br>
+<a th:href="@{/sample/ex2}">/sample/ex2</a><br>
+<a th:href="@{/sample/exInline}">/sample/exInline</a><br>
+<a th:href="@{/sample/ex3}">/sample/ex3</a><br>
+<a th:href="@{/sample/exLayout1}">/sample/exLayout1</a><br>
+<a th:href="@{/sample/exLayout2}">/sample/exLayout2</a><br>
+<a th:href="@{/sample/exTemplate}">/sample/exTemplate</a><br>
+<a th:href="@{/sample/exSidebar}">/sample/exSidebar</a><br>
+
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<h1>ex3</h1>
+<h3 th:text="'dtoModel: '+${dtoModel}"></h3>
+<h3 th:text="'dtoRA: '+${dtoRA}"></h3>
+<h3 th:text="'dtoFlash: '+${dtoFlash}"></h3>
+<h3 th:text="'result: '+${result}"></h3>
+<h3>RedirectAttributes는 redirect로 재전송이 된다. </h3>
+<h3>RedirectAttributes는 새로고침을 하면 데이터는 사라진다.(일회성)</h3>
+
+<h3 th:text="'dtoModel1: '+${dtoModel1}"></h3>
+<h3 th:text="'dtoRA1: '+${dtoRA1}"></h3>
+<h3 th:text="'dtoFlash1: '+${dtoFlash1}"></h3>
+<h3 th:text="'result1: '+${result1}"></h3>
+
+<script th:inline="javascript">
+  var result = [[${result}]]
+  var dto = [[${dto}]]
+  if(result == "success") alert("success")
+  console.log(dto);
+</script>
+</body>
+</html>

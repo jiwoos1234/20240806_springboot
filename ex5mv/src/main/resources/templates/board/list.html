@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{/layout/basic :: setContent(~{this::content})}">
+  <th:block th:fragment="content">
+    <h1 class="mt-4">Board List Page
+      <a class="btn btn-outline-primary" th:href="@{/board/register}">Register</a>
+    </h1>
+    <form th:action="@{/board/list}" id="frmSearch" method="get">
+      <div class="input-group">
+        <div class="input-group-prepend" style="margin-right:10px;">
+          <select class="form-control" id="type" name="type">
+            <option th:selected="${pageRequestDTO.type == null}">선택하세요</option>
+            <option value="t" th:selected="${pageRequestDTO.type == 't'}">제목</option>
+            <option value="c" th:selected="${pageRequestDTO.type == 'c'}">내용</option>
+            <option value="w" th:selected="${pageRequestDTO.type == 'w'}">작성자</option>
+            <option value="tc" th:selected="${pageRequestDTO.type == 'tc'}">제목+내용</option>
+            <option value="tcw" th:selected="${pageRequestDTO.type == 'tcw'}">제목+내용+작성자</option>
+          </select>
+        </div>
+        <input type="text" class="form-control" name="keyword" style="border-radius:5px"
+               id="keyword" th:value="${pageRequestDTO.keyword}">
+        <div class="input-group-append" style="margin-left:10px;">
+          <button class="btn btn-outline-primary btnSearch">Search</button>
+        </div>
+      </div>
+    </form>
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th scope="col">Bno</th>
+        <th scope="col">Title</th>
+        <th scope="col">Writer</th>
+        <th scope="col">RegDate</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="boardDTO : ${pageResultDTO.dtoList}" style="cursor:pointer;"
+          th:onclick="goRead([[${boardDTO.bno}]],[[${pageResultDTO.page}]],[[${pageRequestDTO.type}]], [[${pageRequestDTO.keyword}]])"
+          onmouseover="this.style.background='#d6e6ff'"
+          onmouseout="this.style.background='white'">
+        <th scope="row">[[${boardDTO.bno}]]</th>
+        <td>[[${boardDTO.title}]] ___ [<b th:text="${boardDTO.replyCount}"></b>]</td>
+        <td>[[${boardDTO.writerName}]]<small>([[${boardDTO.writerEmail}]])</small></td>
+        <td>[[${#temporals.format(boardDTO.regDate, 'yyyy/MM/dd hh:mm')}]]</td>
+      </tr>
+      </tbody>
+    </table>
+    <ul class="pagination h-100 justify-content-center align-items-center">
+      <li class="page-item " th:if="${pageResultDTO.prev}">
+        <a class="page-link" tabindex="-1"
+           th:href="@{/board/list(page=${pageResultDTO.start-1})}">Prev</a>
+      </li>
+      <li th:each="page : ${pageResultDTO.pageList}"
+          th:class=" 'page-item ' + ${pageResultDTO.page == page?'active':''} ">
+        <a class="page-link"
+           th:href="@{/board/list(page=${page},type=${pageRequestDTO.type},keyword=${pageRequestDTO.keyword})}">[[${page}]]</a>
+      </li>
+      <li class="page-item " th:if="${pageResultDTO.next}">
+        <a class="page-link"
+           th:href="@{/board/list(page=${pageResultDTO.end+1})}">Next</a>
+      </li>
+    </ul>
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script th:inline="javascript">
+      // document의 태그를 모두 읽고 난뒤 실행되는 함수
+      window.onload = function(){
+        var msg = [[${msg}]]
+        // 일회성 msg의 내용이 비거나 history 상태가 비지 않는 경우 return
+        //if(msg === '' || history.state) return
+
+        if(msg) {  // truthy 데이터가 올 경우만 if문 실행
+          const myModal = new bootstrap.Modal(document.querySelector('#myModal'),
+                          { backdrop: true });
+          document.querySelector(".modal-body").innerHTML
+            = `<p>${msg}되었습니다.</p>`
+          myModal.show()
+        }
+        // history 이용해서 모달창 보여준거에 대한 기록을 clear!
+        history.replaceState({}, null, null) //(state, unused, url)
+
+        frmSearch = document.querySelector("#frmSearch")
+        btnSearch = document.querySelector(".btnSearch")
+        type = document.querySelector("#type");
+        keyword = document.querySelector("#keyword")
+
+        btnSearch.onclick = e => {
+          e.preventDefault();
+          if(!keyword.value) {
+            keyword.focus();
+            return;
+          }
+          frmSearch.submit();
+        }
+        type.onchange = () => {
+          if(type.options[0].selected) {
+            location.href = /*[[@{/board/list}]]*/'url'
+          } else {
+            keyword.disabled = false;
+            btnSearch.disabled = false;
+          }
+        }
+        const requestKeyword = /*[[${pageRequestDTO.keyword}]]*/'keyword'
+        keyword.disabled = requestKeyword?false:true;
+        btnSearch.disabled = requestKeyword?false:true;
+      }
+      function goRead(bno, page, type, keyword){
+        url = /*[[@{/board/read}]]*/'url'
+        location.href = url + `?bno=${bno}&page=${page}&type=${type}&keyword=${keyword}`
+      }
+    </script>
+  </th:block>
+</th:block>
+</html>

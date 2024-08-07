@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<!-- th:text="${}" ${}는 컨트롤러부터 오는 변수,텍스트,숫자 표현 -->
+<h3 th:text="${'${ } 변수 또는 값'}"></h3>
+
+<h3>#{ } message </h3>
+<p th:text=
+       "#{msg.login.ok(${sample.getFirst()}, ${sample.getRegTime()})}"></p>
+<h3>*{ } 선택 변수 </h3>
+<xmp>
+  <div th:object="${sample}">
+    <p>
+      <span>sample ${}</span><br>
+      <span th:text="${sample.getSno()}"></span>
+      <span th:text="${sample.getFirst()}"></span>
+      <span th:text="${sample.getLast()}"></span>
+      <span th:text="${sample.getRegTime()}"></span>
+    </p>
+    <p>
+      <span>sampleDTO *{}</span><br>
+      <span th:text="*{sno}"></span>
+      <span th:text="*{first}"></span>
+      <span th:text="*{last}"></span>
+      <span th:text="*{regTime}"></span>
+    </p>
+  </div>
+</xmp>
+<h3 th:text="${'@{ } Link URL'}"></h3>
+<a th:href="@{/sample/ex1}">돌아가기</a>
+</body>
+</html>
