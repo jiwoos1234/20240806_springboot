@@ -19,9 +19,14 @@ public class SampleController {
   public void exMember() {
     log.info("/member");  // 로그인 사용자 접근
   }
+
   @GetMapping("/admin")
   public void exAdmin() {
     log.info("/admin"); // 로그인사용자 중 관리자만 접근
+  }
+
+  @GetMapping("/logout")
+  public void exlogout() { log.info("/logout"); // 로그아웃
   }
 
 }
