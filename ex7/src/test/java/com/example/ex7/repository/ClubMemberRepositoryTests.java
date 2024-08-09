@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
@@ -34,5 +35,11 @@ class ClubMemberRepositoryTests {
       if(i>90) clubMember.addMemberRole(ClubMemberRole.ADMIN);
       clubMemberRepository.save(clubMember);
     });
+  }
+
+  @Test
+  public void testRead() {
+    Optional<ClubMember> result = clubMemberRepository.findByEmail("user100@a.a");
+    if (result.isPresent()) System.out.println(result.get());
   }
 }
