@@ -1,5 +1,10 @@
 package com.example.ex7.config;
 
+import com.example.ex7.security.handler.CustomAccessDeniedHandler;
+import com.example.ex7.security.handler.CustomAuthenticationFailureHandler;
+import com.example.ex7.security.handler.CustomLoginSuccessHandler;
+import com.example.ex7.security.handler.CustomLogoutSuccessHandler;
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,10 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RememberMeConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,9 +30,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,10 +47,11 @@ import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
   private static final String[] AUTH_WHITElIST = {
-      "/", "/sample/all"
+      "/"
   };
 
   @Bean
@@ -60,7 +73,11 @@ public class SecurityConfig {
     // 모든 페이지가 인증을 받도록 되어 있는 상태
     // httpSecurity.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
     httpSecurity.authorizeHttpRequests(
-        auth -> auth.requestMatchers(AUTH_WHITElIST).permitAll()
+        auth -> auth
+            .requestMatchers(AUTH_WHITElIST).permitAll()
+            //.requestMatchers("/sample/all").permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/error/**")).permitAll()
             .requestMatchers("/sample/admin/**").hasRole("ADMIN")
             .requestMatchers("/sample/manager/**").access(
                 new WebExpressionAuthorizationManager(
@@ -76,31 +93,8 @@ public class SecurityConfig {
 //            .loginPage("/sample/login")
 //            .loginProcessingUrl("/sample/login")
 //            .defaultSuccessUrl("/")
-            .successHandler(new AuthenticationSuccessHandler() {
-              @Override
-              public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                UserDetails principal = (UserDetails) authentication.getPrincipal();
-                Collection<GrantedAuthority> authors =
-                    (Collection<GrantedAuthority>) principal.getAuthorities();
-                List<String> result = authors.stream().map(new Function<GrantedAuthority, String>() {
-                  @Override
-                  public String apply(GrantedAuthority grantedAuthority) {
-                    return grantedAuthority.getAuthority();
-                  }
-                }).collect(Collectors.toList());
-                System.out.println(">>" + result.toString());
-                for (int i = 0; i < result.size(); i++) {
-                  if (result.get(i).equals("ROLE_ADMIN")) {
-                    response.sendRedirect(request.getContextPath() + "/sample/admin");
-                  } else if (result.get(i).equals("ROLE_MANAGER")) {
-                    response.sendRedirect(request.getContextPath() + "/sample/manager");
-                  } else {
-                    response.sendRedirect(request.getContextPath() + "/sample/all");
-                  }
-                  break;
-                }
-              }
-            });
+            .successHandler(getAuthenticationSuccessHandler())
+            .failureHandler(getAuthenticationFailureHandler());
       }
     });
     // logout() 정의 안해도 로그아웃 페이지 사용 가능. 사용자 로그아웃 페이지 지정할 때사용
@@ -112,19 +106,68 @@ public class SecurityConfig {
             // logoutUrl()으로 인해 기존 logout 주소 이동은 가능하나 기능은 사용 안됨.
             .logoutUrl("/logout")
             .logoutSuccessUrl("/") // 로그아웃 후에 돌아갈 페이지 설정
-            //.logoutSuccessHandler((request, response, authentication) -> {
-              // logout 후에 개별적으로 여러가지 상황에 대하여 적용 가능한 설정
-            //})
+            .logoutSuccessHandler(getLogoutSuccessHandler())
             .invalidateHttpSession(true); // 서버 세션을 무효화, false도 클라이언트측 무효화
       }
     });
-    httpSecurity.oauth2Login(httpSecurityOAuth2LoginConfigurer -> httpSecurityOAuth2LoginConfigurer.successHandler(new AuthenticationSuccessHandler() {
+    httpSecurity.oauth2Login(new Customizer<OAuth2LoginConfigurer<HttpSecurity>>() {
       @Override
-      public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-//        response.sendRedirect(request.getContextPath()+"/sample/all");
+      public void customize(OAuth2LoginConfigurer<HttpSecurity> httpSecurityOAuth2LoginConfigurer) {
+        httpSecurityOAuth2LoginConfigurer.successHandler(
+            getAuthenticationSuccessHandler()
+        );
       }
-    }));
+    });
+    httpSecurity.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
+      httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(
+          getAccessDeniedHandler());
+    });
+    httpSecurity.rememberMe(new Customizer<RememberMeConfigurer<HttpSecurity>>() {
+      @Override
+      public void customize(RememberMeConfigurer<HttpSecurity> httpSecurityRememberMeConfigurer) {
+        // database 아이디를 통하여 로그인하는 경우 사용, 소셜로그인은 사용 불가
+        httpSecurityRememberMeConfigurer.tokenValiditySeconds(60 * 60 * 24 * 7);
+        // 익명객체를 활용하여 rememberMe 사용할 때
+        /*httpSecurityRememberMeConfigurer.rememberMeServices(new RememberMeServices() {
+          @Override
+          public Authentication autoLogin(HttpServletRequest request, HttpServletResponse response) {
+            return null;
+          }
+
+          @Override
+          public void loginFail(HttpServletRequest request, HttpServletResponse response) {
+
+          }
+
+          @Override
+          public void loginSuccess(HttpServletRequest request, HttpServletResponse response, Authentication successfulAuthentication) {
+
+          }
+        });*/
+      }
+    });
+
     return httpSecurity.build();
+  }
+  // AuthenticationSuccessHandler는 로그인되었을 때 처리하는 객체
+  @Bean
+  public AuthenticationSuccessHandler getAuthenticationSuccessHandler() {
+    return new CustomLoginSuccessHandler();
+  }
+
+  @Bean
+  public AccessDeniedHandler getAccessDeniedHandler() {
+    return new CustomAccessDeniedHandler();
+  }
+
+  @Bean
+  public AuthenticationFailureHandler getAuthenticationFailureHandler() {
+    return new CustomAuthenticationFailureHandler();
+  }
+
+  @Bean
+  public LogoutSuccessHandler getLogoutSuccessHandler() {
+    return new CustomLogoutSuccessHandler();
   }
 
   // InMemory 방식으로 UserDetailsService(인증 관리 객체) 사용
